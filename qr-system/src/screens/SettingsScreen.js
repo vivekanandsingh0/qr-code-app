@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/UIComponents';
 import { useApp } from '../db/AppContext';
@@ -64,6 +64,13 @@ export default function SettingsScreen() {
                 <View style={styles.info}>
                     <Text style={styles.infoText}>Version 1.0.0</Text>
                     <Text style={styles.infoText}>Event: FRESHERS2025</Text>
+
+                    <View style={styles.creditContainer}>
+                        <Text style={styles.creditText}>Developed by Vivekanand Singh</Text>
+                        <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/919508020857')}>
+                            <Text style={styles.contactLink}>Contact: +91 9508020857</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
         </SafeAreaView>
@@ -78,5 +85,8 @@ const styles = StyleSheet.create({
     dangerZone: { marginTop: 40, padding: 20, backgroundColor: '#fff', borderRadius: 12, borderColor: '#FF3B30', borderWidth: 1 },
     dangerTitle: { color: '#FF3B30', fontWeight: 'bold', marginBottom: 10, alignSelf: 'center' },
     info: { marginTop: 40, alignItems: 'center' },
-    infoText: { color: '#999', marginVertical: 4 }
+    infoText: { color: '#999', marginVertical: 4 },
+    creditContainer: { marginTop: 20, alignItems: 'center' },
+    creditText: { fontSize: 14, fontWeight: '600', color: '#333' },
+    contactLink: { fontSize: 14, color: '#007AFF', marginTop: 5, textDecorationLine: 'underline' }
 });

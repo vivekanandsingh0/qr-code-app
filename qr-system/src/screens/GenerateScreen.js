@@ -13,7 +13,32 @@ export default function GenerateScreen() {
     const [count, setCount] = useState('');
     const [title, setTitle] = useState('');
     const [generatedList, setGeneratedList] = useState([]);
-    const { refreshData } = useApp();
+    const { refreshData, stats } = useApp();
+
+    React.useEffect(() => {
+        loadExistingTokens();
+    }, []);
+
+    const loadExistingTokens = async () => {
+        const storedTokens = await Storage.getGeneratedTokens();
+        const list = Object.values(storedTokens).map(t => ({
+            token: t.id,
+            label: t.id,
+            hash: t.hash,
+            event: "FRESHERS2025", // assuming event name for display if not stored in root
+            batch: 1,
+            title: t.title || "FRESHERS2025"
+        }));
+        // Sort by token ID (descending) or creation
+        list.sort((a, b) => b.token.localeCompare(a.token));
+        setGeneratedList(list);
+    };
+
+    React.useEffect(() => {
+        if (stats.totalGenerated === 0 && generatedList.length > 0) {
+            setGeneratedList([]);
+        }
+    }, [stats.totalGenerated]);
 
     const handleGenerate = async () => {
         const num = parseInt(count);
@@ -56,7 +81,9 @@ export default function GenerateScreen() {
 
         await Storage.saveGeneratedTokens(newTokens);
         await refreshData();
-        setGeneratedList(batchList);
+        // Reload all tokens to show full list including new ones
+        await loadExistingTokens();
+
         setCount('');
         Alert.alert("Success", `Generated ${num} tokens!`);
     };

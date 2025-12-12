@@ -4,8 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatTile, Card } from '../components/UIComponents';
 import { useApp } from '../db/AppContext';
 
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 export default function StatsScreen() {
-    const { stats, scanLogs, isLoading } = useApp();
+    const { stats, scanLogs, isLoading, refreshData } = useApp();
+
+    useFocusEffect(
+        useCallback(() => {
+            refreshData();
+        }, [])
+    );
 
     const renderLog = ({ item }) => (
         <View style={styles.logItem}>
