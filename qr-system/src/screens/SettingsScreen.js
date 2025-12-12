@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Linking, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/UIComponents';
 import { useApp } from '../db/AppContext';
@@ -8,21 +8,31 @@ import * as FileSystem from 'expo-file-system';
 
 export default function SettingsScreen() {
     const { resetAll, scanLogs } = useApp();
+    const [modalVisible, setModalVisible] = useState(false);
+    const [password, setPassword] = useState('');
 
-    const handleReset = () => {
+    const ADMIN_PASS = "Vk@815353";
+
+    const handleResetRequest = () => {
         Alert.alert(
             "Reset All Data",
             "Are you sure? This will delete all generated tokens and scan history. This action cannot be undone.",
             [
                 { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete", style: "destructive", onPress: () => {
-                        resetAll();
-                        Alert.alert("Reset Complete", "All data has been cleared.");
-                    }
-                }
+                { text: "Proceed", style: "destructive", onPress: () => setModalVisible(true) }
             ]
         );
+    };
+
+    const confirmReset = () => {
+        if (password === ADMIN_PASS) {
+            resetAll();
+            setModalVisible(false);
+            setPassword('');
+            Alert.alert("Reset Complete", "All data has been cleared.");
+        } else {
+            Alert.alert("Access Denied", "Incorrect Password.");
+        }
     };
 
     const handleExport = async () => {
@@ -58,7 +68,7 @@ export default function SettingsScreen() {
 
                 <View style={styles.dangerZone}>
                     <Text style={styles.dangerTitle}>Danger Zone</Text>
-                    <Button title="Reset All Data" onPress={handleReset} type="danger" />
+                    <Button title="Reset All Data" onPress={handleResetRequest} type="danger" />
                 </View>
 
                 <View style={styles.info}>
@@ -73,6 +83,40 @@ export default function SettingsScreen() {
                     </View>
                 </View>
             </View>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Enter Admin Password</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                        />
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalBtn, styles.modalBtnCancel]}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={styles.textStyle}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalBtn, styles.modalBtnConfirm]}
+                                onPress={confirmReset}
+                            >
+                                <Text style={styles.textStyle}>Confirm</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -88,5 +132,15 @@ const styles = StyleSheet.create({
     infoText: { color: '#999', marginVertical: 4 },
     creditContainer: { marginTop: 20, alignItems: 'center' },
     creditText: { fontSize: 14, fontWeight: '600', color: '#333' },
-    contactLink: { fontSize: 14, color: '#007AFF', marginTop: 5, textDecorationLine: 'underline' }
+    contactLink: { fontSize: 14, color: '#007AFF', marginTop: 5, textDecorationLine: 'underline' },
+    // Modal Styles
+    centeredView: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: 'rgba(0,0,0,0.5)' },
+    modalView: { margin: 20, backgroundColor: "white", borderRadius: 20, padding: 35, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5, width: '80%' },
+    modalText: { marginBottom: 15, textAlign: "center", fontSize: 18, fontWeight: 'bold' },
+    modalInput: { height: 40, margin: 12, borderWidth: 1, padding: 10, width: '100%', borderRadius: 8, borderColor: '#ccc' },
+    modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    modalBtn: { borderRadius: 10, padding: 10, elevation: 2, flex: 0.45, alignItems: 'center' },
+    modalBtnCancel: { backgroundColor: "#ccc" },
+    modalBtnConfirm: { backgroundColor: "#FF3B30" },
+    textStyle: { color: "white", fontWeight: "bold", textAlign: "center" }
 });
