@@ -1,0 +1,82 @@
+import React from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button } from '../components/UIComponents';
+import { useApp } from '../db/AppContext';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
+
+export default function SettingsScreen() {
+    const { resetAll, scanLogs } = useApp();
+
+    const handleReset = () => {
+        Alert.alert(
+            "Reset All Data",
+            "Are you sure? This will delete all generated tokens and scan history. This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete", style: "destructive", onPress: () => {
+                        resetAll();
+                        Alert.alert("Reset Complete", "All data has been cleared.");
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleExport = async () => {
+        if (scanLogs.length === 0) {
+            Alert.alert("No Data", "No scan logs to export.");
+            return;
+        }
+
+        const header = "Token ID,Time,Status\n";
+        const rows = scanLogs.map(log =>
+            `${log.tokenId},${new Date(log.time).toISOString()},${log.type}`
+        ).join("\n");
+
+        const csv = header + rows;
+        const fileUri = FileSystem.documentDirectory + 'scan_logs.csv';
+
+        try {
+            await FileSystem.writeAsStringAsync(fileUri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+            await Sharing.shareAsync(fileUri, { UTI: '.csv', mimeType: 'text/csv' });
+        } catch (e) {
+            Alert.alert("Error", "Failed to export logs.");
+            console.error(e);
+        }
+    };
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.title}>Settings</Text>
+            </View>
+            <View style={styles.content}>
+                <Button title="Export Scan Logs (CSV)" onPress={handleExport} style={{ marginBottom: 20 }} />
+
+                <View style={styles.dangerZone}>
+                    <Text style={styles.dangerTitle}>Danger Zone</Text>
+                    <Button title="Reset All Data" onPress={handleReset} type="danger" />
+                </View>
+
+                <View style={styles.info}>
+                    <Text style={styles.infoText}>Version 1.0.0</Text>
+                    <Text style={styles.infoText}>Event: FRESHERS2025</Text>
+                </View>
+            </View>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#f2f2f7' },
+    header: { padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e5ea' },
+    title: { fontSize: 24, fontWeight: 'bold' },
+    content: { padding: 20 },
+    dangerZone: { marginTop: 40, padding: 20, backgroundColor: '#fff', borderRadius: 12, borderColor: '#FF3B30', borderWidth: 1 },
+    dangerTitle: { color: '#FF3B30', fontWeight: 'bold', marginBottom: 10, alignSelf: 'center' },
+    info: { marginTop: 40, alignItems: 'center' },
+    infoText: { color: '#999', marginVertical: 4 }
+});
