@@ -58,6 +58,10 @@ export default function StatsScreen() {
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderLog}
                     contentContainerStyle={styles.list}
+                    initialNumToRender={10}
+                    maxToRenderPerBatch={10}
+                    windowSize={5}
+                    removeClippedSubviews={true}
                     ListEmptyComponent={<Text style={styles.emptyText}>No scans yet.</Text>}
                 />
             </View>

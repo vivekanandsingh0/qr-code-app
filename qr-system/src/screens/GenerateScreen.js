@@ -164,6 +164,10 @@ export default function GenerateScreen() {
                 keyExtractor={item => item.token}
                 numColumns={2}
                 contentContainerStyle={styles.list}
+                initialNumToRender={8}
+                maxToRenderPerBatch={8}
+                windowSize={3}
+                removeClippedSubviews={true}
                 renderItem={({ item }) => (
                     <View style={{ flex: 1, alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{item.title}</Text>

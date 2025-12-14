@@ -55,8 +55,13 @@ export const AppProvider = ({ children }) => {
         await refreshData();
     };
 
+    const limitReset = async () => {
+        await Storage.limitResetData();
+        await refreshData();
+    };
+
     return (
-        <AppContext.Provider value={{ stats, scanLogs, refreshData, resetAll, isLoading }}>
+        <AppContext.Provider value={{ stats, scanLogs, refreshData, resetAll, limitReset, isLoading }}>
             {children}
         </AppContext.Provider>
     );

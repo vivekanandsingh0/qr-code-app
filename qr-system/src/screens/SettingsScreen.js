@@ -7,16 +7,23 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 
 export default function SettingsScreen() {
-    const { resetAll, scanLogs } = useApp();
+    const { resetAll, limitReset, scanLogs } = useApp();
     const [modalVisible, setModalVisible] = useState(false);
     const [password, setPassword] = useState('');
+    const [resetType, setResetType] = useState(null); // 'FULL' or 'LIMITED'
 
     const ADMIN_PASS = "Vk@815353";
 
-    const handleResetRequest = () => {
+    const promptReset = (type) => {
+        setResetType(type);
+        const title = type === 'FULL' ? "Reset All Data" : "Limited Reset";
+        const msg = type === 'FULL'
+            ? "This will delete ALL data (Tokens + Logs)."
+            : "This will clear LOGS only. Generated tokens will be kept but marked as unused.";
+
         Alert.alert(
-            "Reset All Data",
-            "Are you sure? This will delete all generated tokens and scan history. This action cannot be undone.",
+            title,
+            msg + "\nAre you sure?",
             [
                 { text: "Cancel", style: "cancel" },
                 { text: "Proceed", style: "destructive", onPress: () => setModalVisible(true) }
@@ -24,12 +31,18 @@ export default function SettingsScreen() {
         );
     };
 
-    const confirmReset = () => {
+    const confirmReset = async () => {
         if (password === ADMIN_PASS) {
-            resetAll();
             setModalVisible(false);
             setPassword('');
-            Alert.alert("Reset Complete", "All data has been cleared.");
+
+            if (resetType === 'FULL') {
+                await resetAll();
+                Alert.alert("Complete Reset", "All data deleted.");
+            } else {
+                await limitReset();
+                Alert.alert("Limited Reset", "Logs cleared. Tokens ready for reuse.");
+            }
         } else {
             Alert.alert("Access Denied", "Incorrect Password.");
         }
@@ -68,7 +81,17 @@ export default function SettingsScreen() {
 
                 <View style={styles.dangerZone}>
                     <Text style={styles.dangerTitle}>Danger Zone</Text>
-                    <Button title="Reset All Data" onPress={handleResetRequest} type="danger" />
+                    <Button
+                        title="Limited Reset (Logs Only)"
+                        onPress={() => promptReset('LIMITED')}
+                        type="secondary"
+                        style={{ marginBottom: 10, backgroundColor: '#FF9500' }}
+                    />
+                    <Button
+                        title="Reset All Data (Full)"
+                        onPress={() => promptReset('FULL')}
+                        type="danger"
+                    />
                 </View>
 
                 <View style={styles.info}>

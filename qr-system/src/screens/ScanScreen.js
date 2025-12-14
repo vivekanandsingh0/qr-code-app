@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, Vibration } from 'react-native';
+import { View, Text, StyleSheet, Alert, Vibration, InteractionManager } from 'react-native';
 import { CameraView, Camera } from "expo-camera";
 import { useIsFocused } from '@react-navigation/native';
 import { Button, Card } from '../components/UIComponents';
@@ -12,6 +12,7 @@ export default function ScanScreen() {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false); // throttle
     const [status, setStatus] = useState(null); // { type: 'valid'|'duplicate'|'invalid', token: '' }
+    const [isCameraMounted, setIsCameraMounted] = useState(false);
     const { refreshData } = useApp();
 
     useEffect(() => {
@@ -21,6 +22,21 @@ export default function ScanScreen() {
         };
         getBarCodeScannerPermissions();
     }, []);
+
+    // Delay camera mount/unmount to prevent nav jank
+    useEffect(() => {
+        if (isFocused) {
+            const task = InteractionManager.runAfterInteractions(() => {
+                setIsCameraMounted(true);
+            });
+            return () => task.cancel();
+        } else {
+            // Immediately unmount or delay? Immediate unmount often better for cleanup, 
+            // but if we want smooth EXIT animation, we might delay. 
+            // However, for "black screen" glitch, we want to ensure it IS NOT rendered when not focused.
+            setIsCameraMounted(false);
+        }
+    }, [isFocused]);
 
     const handleBarCodeScanned = async ({ type, data }) => {
         if (scanned) return;
@@ -84,7 +100,7 @@ export default function ScanScreen() {
 
     return (
         <View style={styles.container}>
-            {isFocused && (
+            {isCameraMounted && (
                 <CameraView
                     onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
                     barcodeScannerSettings={{

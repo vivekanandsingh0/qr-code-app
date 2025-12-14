@@ -175,6 +175,38 @@ export const getScanLogs = async (localOnly = false) => {
     }
 };
 
+// --- Limited Reset (Logs & Usage only) ---
+export const limitResetData = async () => {
+    try {
+        // 1. Local Reset
+        await AsyncStorage.removeItem(KEYS.SCAN_LOGS);
+        await AsyncStorage.removeItem(KEYS.USED_TOKENS);
+
+        // Reset usage in GENERATED_TOKENS
+        const allTokens = await getGeneratedTokens(true);
+        Object.keys(allTokens).forEach(key => {
+            allTokens[key].used = false;
+            allTokens[key].scannedAt = null;
+        });
+        await AsyncStorage.setItem(KEYS.GENERATED_TOKENS, JSON.stringify(allTokens));
+
+        // 2. Supabase Reset
+        // Clear logs
+        const { error: e1 } = await supabase.from('scan_logs').delete().neq('id', -1);
+
+        // Reset tokens usage status
+        const { error: e2 } = await supabase
+            .from('tokens')
+            .update({ is_used: false, scanned_at: null })
+            .neq('id', '0'); // update all
+
+        if (e1 || e2) console.error("Supabase Limited Reset Error", e1, e2);
+
+    } catch (e) {
+        console.error("Error limited reset", e);
+    }
+};
+
 // --- Global Reset ---
 export const clearAllData = async () => {
     try {
